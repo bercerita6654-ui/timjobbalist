@@ -1,0 +1,6 @@
+{
+  "name": "Jobdesk Team Online - Workload & SOP Manager",
+  "description": "Platform interaktif manajemen pembagian tugas, SOP e-commerce, matriks tanggung jawab, dan operasional tim online dengan ekspor multi-format.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

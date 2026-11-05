@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jobdesk Team Online - Interactive Manager</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- PptxGenJS for PowerPoint Export -->
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <!-- html2pdf for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .gradient-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+        }
+        .card-hover {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: white !important;
+            }
+            .print-break {
+                page-break-inside: avoid;
+            }
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Top Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform transition-all duration-300 translate-y-24 opacity-0 pointer-events-none flex items-center gap-3 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-slate-700">
+        <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400" id="toast-icon"></i>
+        <span id="toast-message" class="text-sm font-medium">Data berhasil disimpan!</span>
+    </div>
+
+    <!-- Header Section -->
+    <header class="gradient-header text-white shadow-lg no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <!-- Title & Subtitle -->
+                <div class="flex items-start gap-4">
+                    <div class="p-3.5 bg-white/15 backdrop-blur-md rounded-2xl border border-white/20 shadow-inner">
+                        <i data-lucide="briefcase" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider bg-amber-400 text-slate-950 rounded-full">SOP & Distribusi Tugas</span>
+                            <span id="cloud-status" class="px-2.5 py-0.5 text-xs font-medium bg-white/20 text-white rounded-full flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Tersimpan Otomatis
+                            </span>
+                        </div>
+                        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1" id="doc-title" contenteditable="true" spellcheck="false" title="Klik untuk mengedit judul">JOBDESK TEAM ONLINE</h1>
+                        <p class="text-indigo-100 text-sm mt-0.5" id="doc-subtitle" contenteditable="true" spellcheck="false">Struktur Pembagian Tugas Operasional E-Commerce, Customer Service & Logistik</p>
+                    </div>
+                </div>
+
+                <!-- Action Toolbar (Export / Import / Save) -->
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <!-- Save Button -->
+                    <button onclick="saveAllData()" class="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 py-2.5 rounded-xl shadow-md transition active:scale-95 text-sm">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        <span>Simpan Perubahan</span>
+                    </button>
+
+                    <!-- Export Dropdown / Group -->
+                    <div class="flex flex-wrap items-center bg-white/10 backdrop-blur-md p-1.5 rounded-2xl border border-white/20 gap-1.5">
+                        <button onclick="exportToDocx()" class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl text-xs font-semibold transition shadow-sm" title="Unduh format Microsoft Word (.doc)">
+                            <i data-lucide="file-text" class="w-4 h-4"></i>
+                            <span>DOCX</span>
+                        </button>
+                        <button onclick="exportToPDF()" class="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-xl text-xs font-semibold transition shadow-sm" title="Unduh format PDF">
+                            <i data-lucide="file-down" class="w-4 h-4"></i>
+                            <span>PDF</span>
+                        </button>
+                        <button onclick="exportToPPTX()" class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 px-3 py-2 rounded-xl text-xs font-bold transition shadow-sm" title="Unduh Presentasi PowerPoint (.pptx)">
+                            <i data-lucide="presentation" class="w-4 h-4"></i>
+                            <span>PPTX</span>
+                        </button>
+                        <button onclick="exportToCSV()" class="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-xl text-xs font-semibold transition shadow-sm" title="Unduh Spreadsheet CSV/Excel">
+                            <i data-lucide="sheet" class="w-4 h-4"></i>
+                            <span>Spreadsheet (CSV)</span>
+                        </button>
+                        <label class="cursor-pointer flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-xl text-xs font-semibold transition" title="Impor dari file Spreadsheet CSV">
+                            <i data-lucide="upload" class="w-4 h-4"></i>
+                            <span>Impor CSV</span>
+                            <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="importFromCSV(event)">
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sub-navigation & Filters -->
+    <div class="bg-white border-b border-slate-200 sticky top-0 z-30 no-print shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+            <!-- View Switcher -->
+            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <button onclick="switchView('cards')" id="tab-cards" class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition bg-white text-indigo-600 shadow-sm">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                    <span>Kartu Visual</span>
+                </button>
+                <button onclick="switchView('spreadsheet')" id="tab-spreadsheet" class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-slate-600 hover:text-slate-900">
+                    <i data-lucide="table" class="w-4 h-4"></i>
+                    <span>Mode Spreadsheet</span>
+                </button>
+                <button onclick="switchView('matrix')" id="tab-matrix" class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-slate-600 hover:text-slate-900">
+                    <i data-lucide="check-square" class="w-4 h-4"></i>
+                    <span>Matriks Tugas</span>
+                </button>
+            </div>
+
+            <!-- Search & Controls -->
+            <div class="flex flex-wrap items-center gap-2.5 flex-1 sm:flex-initial justify-end">
+                <div class="relative flex-1 sm:w-64">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" id="searchInput" oninput="renderAll()" placeholder="Cari nama atau tugas..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                </div>
+
+                <select id="categoryFilter" onchange="renderAll()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="ALL">Semua Kategori</option>
+                    <option value="Manajemen & Katalog">Manajemen & Katalog</option>
+                    <option value="Nota & Keuangan">Nota & Keuangan</option>
+                    <option value="CS & Chat">CS & Chat</option>
+                    <option value="Packing & Logistik">Packing & Logistik</option>
+                    <option value="Live Streaming">Live Streaming</option>
+                </select>
+
+                <button onclick="openAddMemberModal()" class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-sm font-semibold shadow-sm transition">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Tambah Personel</span>
+                </button>
+
+                <button onclick="openResetModal()" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition" title="Reset ke Data Awal">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Printable Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8" id="printable-area">
+
+        <!-- Summary Statistics Banner -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                    <i data-lucide="users" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Personel</p>
+                    <p class="text-2xl font-extrabold text-slate-800" id="stat-members">7 Orang</p>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                    <i data-lucide="check-circle" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Item Tugas</p>
+                    <p class="text-2xl font-extrabold text-slate-800" id="stat-tasks">31 Tugas</p>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                    <i data-lucide="package-check" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Tim Packing & Nota</p>
+                    <p class="text-2xl font-extrabold text-slate-800" id="stat-packing">6 Orang</p>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                    <i data-lucide="video" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Host Live & CS</p>
+                    <p class="text-2xl font-extrabold text-slate-800" id="stat-live">4 Orang</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 1: VISUAL CARDS (DEFAULT) -->
+        <section id="view-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Dynamically populated by JS -->
+        </section>
+
+        <!-- VIEW 2: SPREADSHEET EDITOR -->
+        <section id="view-spreadsheet" class="hidden">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-slate-50">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="table-2" class="w-5 h-5 text-teal-600"></i>
+                            Tabel Data Spreadsheet Interaktif
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Klik langsung pada sel tabel untuk mengedit data. Perubahan langsung tersinkronisasi dengan tampilan kartu dan dokumen ekspor.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="addSpreadsheetRow()" class="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition shadow-sm">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>Tambah Baris Tugas</span>
+                        </button>
+                        <button onclick="exportToCSV()" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition shadow-sm">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>Unduh CSV (Excel)</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                                <th class="py-3.5 px-4 font-bold w-12 text-center">No</th>
+                                <th class="py-3.5 px-4 font-bold w-44">Nama Personel</th>
+                                <th class="py-3.5 px-4 font-bold w-44">Peran / Jabatan</th>
+                                <th class="py-3.5 px-4 font-bold">Deskripsi Tugas (Jobdesk)</th>
+                                <th class="py-3.5 px-4 font-bold w-52">Kategori</th>
+                                <th class="py-3.5 px-4 font-bold w-20 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="spreadsheet-body" class="divide-y divide-slate-200 text-sm">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: TASK MATRIX -->
+        <section id="view-matrix" class="hidden">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-200 bg-slate-50">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="grid" class="w-5 h-5 text-indigo-600"></i>
+                        Matriks Distribusi Tanggung Jawab Tim
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Pemetaan silang antara tugas operasional utama dengan masing-masing anggota tim.</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse" id="matrix-table">
+                        <!-- Populated by JS -->
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal: Add / Edit Member -->
+    <div id="memberModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="text-lg font-bold text-slate-800" id="modalTitle">Tambah Personel Baru</h3>
+                <button onclick="closeMemberModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="saveMemberForm(event)" class="mt-4 space-y-4">
+                <input type="hidden" id="memberIdInput">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Nama Personel</label>
+                    <input type="text" id="memberNameInput" required placeholder="Contoh: ANDI" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Jabatan / Peran</label>
+                    <input type="text" id="memberRoleInput" required placeholder="Contoh: Admin Marketplace & CS" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Tema Warna Kartu</label>
+                    <select id="memberThemeInput" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="indigo">Indigo Royal (Leader / Utama)</option>
+                        <option value="rose">Rose Pink (CS & Host Live)</option>
+                        <option value="purple">Purple Violet (Admin & CS)</option>
+                        <option value="emerald">Emerald Green (Operasional & Live)</option>
+                        <option value="amber">Amber Gold (Admin & Packing)</option>
+                        <option value="cyan">Cyan Blue (Logistik & Packing)</option>
+                        <option value="blue">Ocean Blue (Persiapan Nota)</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeMemberModal()" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition">Simpan Personel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Confirm Reset -->
+    <div id="resetModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
+            <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800">Reset ke Data Awal?</h3>
+            <p class="text-sm text-slate-500 mt-1">Semua perubahan kustom yang Anda buat akan dikembalikan ke struktur awal Jobdesk Team Online (Bobby, Winda, Putri, Desak, Nazwa, Danang, Nanda).</p>
+            <div class="flex items-center justify-end gap-2 mt-6">
+                <button onclick="closeResetModal()" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">Batal</button>
+                <button onclick="confirmResetData()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-md transition">Ya, Reset Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-6 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                <span class="font-semibold text-slate-700">Sistem Manajemen Jobdesk Team Online</span>
+                <span>• Dapat diedit & diekspor ke DOCX, PDF, PPTX, dan CSV</span>
+            </div>
+            <div>
+                <span>Tips: Klik teks tugas pada kartu untuk langsung mengedit isinya.</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK for Cloud Persistence -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Setup Firebase if available in environment
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'jobdesk-team-online-app';
+
+        async function initCloudStorage() {
+            try {
+                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    const app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                    onAuthStateChanged(auth, (user) => {
+                        currentUser = user;
+                        if (user) {
+                            listenToCloudData(user.uid);
+                        }
+                    });
+                }
+            } catch (err) {
+                console.warn("Mode penyimpanan lokal aktif:", err);
+            }
+        }
+
+        function listenToCloudData(uid) {
+            if (!db || !uid) return;
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'jobdesk_state', 'main_board');
+            onSnapshot(docRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const cloudData = snapshot.data();
+                    if (cloudData && cloudData.membersJson) {
+                        try {
+                            const parsed = JSON.parse(cloudData.membersJson);
+                            if (Array.isArray(parsed) && parsed.length > 0) {
+                                window.teamData = parsed;
+                                if (cloudData.title) document.getElementById('doc-title').innerText = cloudData.title;
+                                if (cloudData.subtitle) document.getElementById('doc-subtitle').innerText = cloudData.subtitle;
+                                window.renderAll();
+                            }
+                        } catch (e) {
+                            console.error("Gagal memuat data cloud:", e);
+                        }
+                    }
+                } else {
+                    // Save initial data to cloud
+                    window.saveToCloud();
+                }
+            }, (error) => {
+                console.warn("Snapshot listener info:", error);
+            });
+        }
+
+        window.saveToCloud = async function() {
+            if (!db || !currentUser) return;
+            try {
+                const statusEl = document.getElementById('cloud-status');
+                if (statusEl) {
+                    statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-300 animate-ping"></span> Menyimpan...`;
+                }
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'jobdesk_state', 'main_board');
+                await setDoc(docRef, {
+                    title: document.getElementById('doc-title').innerText.trim(),
+                    subtitle: document.getElementById('doc-subtitle').innerText.trim(),
+                    membersJson: JSON.stringify(window.teamData),
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: currentUser.uid
+                });
+                if (statusEl) {
+                    statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Tersimpan di Cloud`;
+                }
+            } catch (e) {
+                console.error("Save error:", e);
+            }
+        };
+
+        initCloudStorage();
+    </script>
+
+    <!-- Main Application Logic -->
+    <script>
+        // Default Structured Data based on User's Document
+        const DEFAULT_TEAM_DATA = [
+            {
+                id: 'm-bobby',
+                name: 'BOBBY',
+                role: 'LEADER TEAM ONLINE',
+                badge: 'Team Leader',
+                theme: 'indigo',
+                tasks: [
+                    { id: 't-101', text: 'Upload Produk baru Marketplace & AIO System', category: 'Manajemen & Katalog' },
+                    { id: 't-102', text: 'Update Design cover & Banner Marketplace', category: 'Manajemen & Katalog' },
+                    { id: 't-103', text: 'Update Campaign sesuai Jadwal yang ditentukan marketplace', category: 'Manajemen & Katalog' },
+                    { id: 't-104', text: 'Mereturn barang Reguler', category: 'Packing & Logistik' },
+                    { id: 't-105', text: 'Perbaikan SKU produk di marketplace', category: 'Manajemen & Katalog' },
+                    { id: 't-106', text: 'Mencetak nota instan dan reguler (Sesuai Jadwal/Opsional)', category: 'Nota & Keuangan' }
+                ]
+            },
+            {
+                id: 'm-winda',
+                name: 'WINDA',
+                role: 'ADMIN KEUNGAN, CS & HOST LIVE',
+                badge: 'Senior Admin',
+                theme: 'rose',
+                tasks: [
+                    { id: 't-201', text: 'Mencetak nota instan dan reguler', category: 'Nota & Keuangan' },
+                    { id: 't-202', text: 'Membuat pelunasan', category: 'Nota & Keuangan' },
+                    { id: 't-203', text: 'Mereturn barang', category: 'Packing & Logistik' },
+                    { id: 't-204', text: 'Membalas chat WA dan marketplace', category: 'CS & Chat' },
+                    { id: 't-205', text: 'Menangani komplain customer', category: 'CS & Chat' },
+                    { id: 't-206', text: 'Packing pesanan', category: 'Packing & Logistik' },
+                    { id: 't-207', text: 'Menambahkan dan mengecek produk di marketplace', category: 'Manajemen & Katalog' },
+                    { id: 't-208', text: 'Merinci barang kosong', category: 'Manajemen & Katalog' },
+                    { id: 't-209', text: 'Live Streaming Marketplace / Sosmed', category: 'Live Streaming' }
+                ]
+            },
+            {
+                id: 'm-putri',
+                name: 'PUTRI',
+                role: 'ADMIN CS, KATALOG & PACKING',
+                badge: 'Admin & CS',
+                theme: 'purple',
+                tasks: [
+                    { id: 't-301', text: 'Mencetak nota instan dan reguler', category: 'Nota & Keuangan' },
+                    { id: 't-302', text: 'Membalas chat WA dan marketplace', category: 'CS & Chat' },
+                    { id: 't-303', text: 'Menangani komplain customer', category: 'CS & Chat' },
+                    { id: 't-304', text: 'Packing pesanan', category: 'Packing & Logistik' },
+                    { id: 't-305', text: 'Menambahkan dan mengecek produk di marketplace', category: 'Manajemen & Katalog' },
+                    { id: 't-306', text: 'Merinci barang kosong', category: 'Manajemen & Katalog' }
+                ]
+            },
+            {
+                id: 'm-desak',
+                name: 'DESAK',
+                role: 'ADMIN CS, INSTAN & HOST LIVE',
+                badge: 'CS & Live',
+                theme: 'emerald',
+                tasks: [
+                    { id: 't-401', text: 'Mencetak nota instan dan reguler', category: 'Nota & Keuangan' },
+                    { id: 't-402', text: 'Membalas chat WA dan marketplace', category: 'CS & Chat' },
+                    { id: 't-403', text: 'Packing pesanan', category: 'Packing & Logistik' },
+                    { id: 't-404', text: 'Live Streaming Marketplace / Sosmed', category: 'Live Streaming' },
+                    { id: 't-405', text: 'Menyiapkan barang nota instan', category: 'Packing & Logistik' }
+                ]
+            },
+            {
+                id: 'm-nazwa',
+                name: 'NAZWA',
+                role: 'ADMIN CS, NOTA & PACKING',
+                badge: 'Admin & Packing',
+                theme: 'amber',
+                tasks: [
+                    { id: 't-501', text: 'Mencetak nota instan dan reguler', category: 'Nota & Keuangan' },
+                    { id: 't-502', text: 'Membalas chat WA dan marketplace', category: 'CS & Chat' },
+                    { id: 't-503', text: 'Packing pesanan', category: 'Packing & Logistik' }
+                ]
+            },
+            {
+                id: 'm-danang',
+                name: 'DANANG',
+                role: 'SPESIALIS PACKING REGULER',
+                badge: 'Logistik Packing',
+                theme: 'cyan',
+                tasks: [
+                    { id: 't-601', text: 'Packing barang nota reguler', category: 'Packing & Logistik' }
+                ]
+            },
+            {
+                id: 'm-nanda',
+                name: 'NANDA',
+                role: 'SPESIALIS NOTA REGULER',
+                badge: 'Fulfillment Nota',
+                theme: 'blue',
+                tasks: [
+                    { id: 't-701', text: 'Menyiapkan nota reguler', category: 'Nota & Keuangan' }
+                ]
+            }
+        ];
+
+        // State
+        window.teamData = JSON.parse(JSON.stringify(DEFAULT_TEAM_DATA));
+        let currentView = 'cards';
+
+        // Color Palette Configuration for Cards & Badges
+        const THEME_CONFIG = {
+            indigo: {
+                headerBg: 'bg-gradient-to-r from-indigo-600 to-violet-600',
+                cardBg: 'bg-white',
+                border: 'border-indigo-200',
+                badgeBg: 'bg-indigo-100 text-indigo-800',
+                avatarBg: 'bg-white/20 text-white',
+                lightBg: 'bg-indigo-50/60',
+                hex: '4F46E5'
+            },
+            rose: {
+                headerBg: 'bg-gradient-to-r from-rose-500 to-pink-600',
+                cardBg: 'bg-white',
+                border: 'border-rose-200',
+                badgeBg: 'bg-rose-100 text-rose-800',
+                avatarBg: 'bg-white/20 text-white',
+                lightBg: 'bg-rose-50/60',
+                hex: 'E11D48'
+            },
+            purple: {
+                headerBg: 'bg-gradient-to-r from-purple-600 to-fuchsia-600',
+                cardBg: 'bg-white',
+                border: 'border-purple-200',
+                badgeBg: 'bg-purple-100 text-purple-800',
+                avatarBg: 'bg-white/20 text-white',
+                lightBg: 'bg-purple-50/60',
+                hex: '9333EA'
+            },
+            emerald: {
+                headerBg: 'bg-gradient-to-r from-emerald-500 to-teal-600',
+                cardBg: 'bg-white',
+                border: 'border-emerald-200',
+                badgeBg: 'bg-emerald-100 text-emerald-800',
+                avatarBg: 'bg-white/20 text-white',
+                lightBg: 'bg-emerald-50/60',
+                hex: '10B981'
+            },
+            amber: {
+                headerBg: 'bg-gradient-to-r from-amber-500 to-orange-500',
+                cardBg: 'bg-white',
+                border: 'border-amber-200',
+                badgeBg: 'bg-amber-100 text-amber-800',
+                avatarBg: 'bg-white/20 text-white',
+                lightBg: 'bg-amber-50/60',
+                hex: 'F59E0B'
+            },
+            cyan: {
+                headerBg: 'bg-gradient-to-r from-cyan-500 to-sky-600',
+                cardBg: 'bg-white',
+                border: 'border-cyan-200',
+                badgeBg: 'bg-cyan-100 text-cyan-800',
+                avatarBg: 'bg-white/20 text-white',
+                lightBg: 'bg-cyan-50/60',
+                hex: '06B6D4'
+            },
+            blue: {
+                headerBg: 'bg-gradient-to-r from-blue-600 to-indigo-500',
+                cardBg: 'bg-white',
+                border: 'border-blue-200',
+                badgeBg: 'bg-blue-100 text-blue-800',
+                avatarBg: 'bg-white/20 text-white',
+                lightBg: 'bg-blue-50/60',
+                hex: '2563EB'
+            }
+        };
+
+        const CATEGORY_BADGES = {
+            'Manajemen & Katalog': 'bg-indigo-100 text-indigo-700 border-indigo-200',
+            'Nota & Keuangan': 'bg-amber-100 text-amber-800 border-amber-200',
+            'CS & Chat': 'bg-purple-100 text-purple-700 border-purple-200',
+            'Packing & Logistik': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+            'Live Streaming': 'bg-rose-100 text-rose-700 border-rose-200'
+        };
+
+        // Helper: Auto-categorize task text
+        function detectCategory(text) {
+            const lower = text.toLowerCase();
+            if (lower.includes('live')) return 'Live Streaming';
+            if (lower.includes('nota') || lower.includes('pelunasan')) return 'Nota & Keuangan';
+            if (lower.includes('chat') || lower.includes('komplain') || lower.includes('wa')) return 'CS & Chat';
+            if (lower.includes('packing') || lower.includes('return') || lower.includes('menyiapkan barang')) return 'Packing & Logistik';
+            return 'Manajemen & Katalog';
+        }
+
+        // Show Notification Toast
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            msgEl.innerText = message;
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 3000);
+        }
+
+        // Switch Tabs
+        function switchView(view) {
+            currentView = view;
+            ['cards', 'spreadsheet', 'matrix'].forEach(v => {
+                const section = document.getElementById(`view-${v}`);
+                const tab = document.getElementById(`tab-${v}`);
+                if (v === view) {
+                    section.classList.remove('hidden');
+                    tab.className = "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition bg-white text-indigo-600 shadow-sm";
+                } else {
+                    section.classList.add('hidden');
+                    tab.className = "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition text-slate-600 hover:text-slate-900";
+                }
+            });
+            renderAll();
+        }
+
+        // Update Top Summary Statistics
+        function updateStats() {
+            const totalMembers = window.teamData.length;
+            const totalTasks = window.teamData.reduce((acc, m) => acc + m.tasks.length, 0);
+            const packingCount = window.teamData.filter(m => m.tasks.some(t => t.category === 'Packing & Logistik' || t.category === 'Nota & Keuangan')).length;
+            const liveCount = window.teamData.filter(m => m.tasks.some(t => t.category === 'Live Streaming' || t.category === 'CS & Chat')).length;
+
+            document.getElementById('stat-members').innerText = `${totalMembers} Orang`;
+            document.getElementById('stat-tasks').innerText = `${totalTasks} Tugas`;
+            document.getElementById('stat-packing').innerText = `${packingCount} Orang`;
+            document.getElementById('stat-live').innerText = `${liveCount} Orang`;
+        }
+
+        // Render Everything
+        window.renderAll = function() {
+            updateStats();
+            renderCardsView();
+            renderSpreadsheetView();
+            renderMatrixView();
+            lucide.createIcons();
+        };
+
+        // Render Visual Cards View
+        function renderCardsView() {
+            const container = document.getElementById('view-cards');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const catFilter = document.getElementById('categoryFilter').value;
+
+            container.innerHTML = '';
+
+            window.teamData.forEach((member, mIndex) => {
+                const filteredTasks = member.tasks.filter(t => {
+                    const matchesSearch = member.name.toLowerCase().includes(search) ||
+                                          member.role.toLowerCase().includes(search) ||
+                                          t.text.toLowerCase().includes(search);
+                    const matchesCat = catFilter === 'ALL' || t.category === catFilter;
+                    return matchesSearch && matchesCat;
+                });
+
+                if (search && filteredTasks.length === 0 && !member.name.toLowerCase().includes(search)) {
+                    return;
+                }
+                if (catFilter !== 'ALL' && filteredTasks.length === 0) {
+                    return;
+                }
+
+                const theme = THEME_CONFIG[member.theme] || THEME_CONFIG.indigo;
+
+                const card = document.createElement('div');
+                card.className = `card-hover print-break rounded-2xl bg-white border ${theme.border} shadow-sm flex flex-col overflow-hidden`;
+
+                // Tasks List HTML
+                const tasksHtml = filteredTasks.map((task) => {
+                    const badgeStyle = CATEGORY_BADGES[task.category] || CATEGORY_BADGES['Manajemen & Katalog'];
+                    return `
+                        <li class="group flex items-start justify-between gap-2.5 p-2.5 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition">
+                            <div class="flex items-start gap-2.5 flex-1">
+                                <span class="w-5 h-5 rounded-full ${theme.badgeBg} flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">✓</span>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-slate-800 leading-snug focus:outline-none focus:bg-amber-50 focus:px-1.5 py-0.5 rounded" 
+                                       contenteditable="true" 
+                                       spellcheck="false"
+                                       onblur="updateTaskText('${member.id}', '${task.id}', this.innerText)">${task.text}</p>
+                                    <span class="inline-block mt-1 px-2 py-0.5 text-[10px] font-semibold rounded-md border ${badgeStyle}">${task.category}</span>
+                                </div>
+                            </div>
+                            <button onclick="deleteTask('${member.id}', '${task.id}')" class="no-print opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-600 p-1 rounded-lg transition" title="Hapus Tugas">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </li>
+                    `;
+                }).join('');
+
+                card.innerHTML = `
+                    <!-- Card Header -->
+                    <div class="${theme.headerBg} p-5 text-white relative">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-center gap-3.5">
+                                <div class="w-12 h-12 rounded-2xl ${theme.avatarBg} backdrop-blur-sm flex items-center justify-center text-xl font-extrabold border border-white/30 shadow-inner">
+                                    ${member.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-lg font-extrabold tracking-wide focus:outline-none focus:underline" 
+                                            contenteditable="true" 
+                                            spellcheck="false"
+                                            onblur="updateMemberField('${member.id}', 'name', this.innerText)">${member.name}</h3>
+                                        ${member.name.toUpperCase() === 'BOBBY' ? '<span class="px-2 py-0.5 text-[10px] font-extrabold uppercase bg-amber-400 text-slate-950 rounded-full shadow">👑 LEADER</span>' : ''}
+                                    </div>
+                                    <p class="text-xs text-white/90 font-medium mt-0.5 focus:outline-none focus:underline"
+                                       contenteditable="true"
+                                       spellcheck="false"
+                                       onblur="updateMemberField('${member.id}', 'role', this.innerText)">${member.role}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 no-print">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-black/20 text-white backdrop-blur-sm">
+                                    ${filteredTasks.length} Tugas
+                                </span>
+                                <button onclick="deleteMember('${member.id}')" class="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition" title="Hapus Personel">
+                                    <i data-lucide="user-x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Body (Task List) -->
+                    <div class="p-4 flex-1 flex flex-col justify-between bg-white">
+                        <ul class="space-y-1.5 divide-y divide-slate-100">
+                            ${tasksHtml || '<li class="text-xs text-slate-400 italic py-4 text-center">Belum ada tugas pada filter ini.</li>'}
+                        </ul>
+
+                        <!-- Quick Add Task Input -->
+                        <div class="mt-4 pt-3 border-t border-slate-100 no-print">
+                            <form onsubmit="addQuickTask(event, '${member.id}')" class="flex items-center gap-1.5">
+                                <input type="text" id="input-task-${member.id}" placeholder="+ Tambah tugas baru..." class="flex-1 text-xs px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                                <button type="submit" class="p-2 bg-slate-800 hover:bg-indigo-600 text-white rounded-xl transition" title="Tambah">
+                                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // Render Spreadsheet Table View
+        function renderSpreadsheetView() {
+            const tbody = document.getElementById('spreadsheet-body');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const catFilter = document.getElementById('categoryFilter').value;
+
+            tbody.innerHTML = '';
+            let rowCounter = 1;
+
+            window.teamData.forEach(member => {
+                member.tasks.forEach(task => {
+                    const matchesSearch = member.name.toLowerCase().includes(search) ||
+                                          member.role.toLowerCase().includes(search) ||
+                                          task.text.toLowerCase().includes(search);
+                    const matchesCat = catFilter === 'ALL' || task.category === catFilter;
+                    if (!matchesSearch || !matchesCat) return;
+
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-indigo-50/40 transition";
+
+                    const categories = ['Manajemen & Katalog', 'Nota & Keuangan', 'CS & Chat', 'Packing & Logistik', 'Live Streaming'];
+                    const selectOptions = categories.map(c => `<option value="${c}" ${c === task.category ? 'selected' : ''}>${c}</option>`).join('');
+
+                    tr.innerHTML = `
+                        <td class="py-3 px-4 text-center font-mono text-xs text-slate-400">${rowCounter++}</td>
+                        <td class="py-3 px-4 font-bold text-slate-800 focus:bg-amber-50 focus:outline-none" contenteditable="true" spellcheck="false" onblur="updateMemberField('${member.id}', 'name', this.innerText)">${member.name}</td>
+                        <td class="py-3 px-4 text-xs font-medium text-slate-600 focus:bg-amber-50 focus:outline-none" contenteditable="true" spellcheck="false" onblur="updateMemberField('${member.id}', 'role', this.innerText)">${member.role}</td>
+                        <td class="py-3 px-4 font-medium text-slate-800 focus:bg-amber-50 focus:outline-none" contenteditable="true" spellcheck="false" onblur="updateTaskText('${member.id}', '${task.id}', this.innerText)">${task.text}</td>
+                        <td class="py-3 px-4">
+                            <select onchange="updateTaskCategory('${member.id}', '${task.id}', this.value)" class="w-full text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                ${selectOptions}
+                            </select>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="deleteTask('${member.id}', '${task.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition" title="Hapus Baris">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        // Render Matrix View
+        function renderMatrixView() {
+            const table = document.getElementById('matrix-table');
+            const coreCompetencies = [
+                { label: 'Upload & Cek Produk Marketplace / SKU', keywords: ['upload', 'produk', 'sku', 'katalog', 'banner', 'campaign'] },
+                { label: 'Mencetak Nota Instan & Reguler', keywords: ['mencetak nota', 'menyiapkan nota'] },
+                { label: 'Membuat Pelunasan', keywords: ['pelunasan'] },
+                { label: 'Membalas Chat WA & Marketplace', keywords: ['chat'] },
+                { label: 'Menangani Komplain Customer', keywords: ['komplain'] },
+                { label: 'Packing Pesanan (Instan / Reguler)', keywords: ['packing', 'menyiapkan barang'] },
+                { label: 'Mereturn Barang & Rinci Barang Kosong', keywords: ['mereturn', 'barang kosong'] },
+                { label: 'Host Live Streaming', keywords: ['live'] }
+            ];
+
+            let headerHtml = `
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 text-xs uppercase border-b border-slate-200">
+                        <th class="py-3.5 px-4 font-bold">Kompetensi / Tugas Utama</th>
+                        ${window.teamData.map(m => `<th class="py-3.5 px-4 font-extrabold text-center">${m.name}</th>`).join('')}
+                    </tr>
+                </thead>
+            `;
+
+            let bodyHtml = `<tbody class="divide-y divide-slate-200 text-sm">`;
+            coreCompetencies.forEach(comp => {
+                bodyHtml += `<tr class="hover:bg-slate-50">
+                    <td class="py-3.5 px-4 font-semibold text-slate-800">${comp.label}</td>`;
+
+                window.teamData.forEach(m => {
+                    const hasTask = m.tasks.some(t => comp.keywords.some(kw => t.text.toLowerCase().includes(kw)));
+                    bodyHtml += `
+                        <td class="py-3.5 px-4 text-center">
+                            ${hasTask 
+                                ? '<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 font-bold text-xs">✓</span>' 
+                                : '<span class="text-slate-300">-</span>'}
+                        </td>
+                    `;
+                });
+
+                bodyHtml += `</tr>`;
+            });
+            bodyHtml += `</tbody>`;
+
+            table.innerHTML = headerHtml + bodyHtml;
+        }
+
+        // CRUD Operations
+        function updateMemberField(memberId, field, value) {
+            const cleanVal = value.trim();
+            if (!cleanVal) return;
+            const member = window.teamData.find(m => m.id === memberId);
+            if (member && member[field] !== cleanVal) {
+                member[field] = cleanVal;
+                if (window.saveToCloud) window.saveToCloud();
+                showToast(`Data ${member.name} diperbarui`);
+                renderAll();
+            }
+        }
+
+        function updateTaskText(memberId, taskId, newText) {
+            const cleanText = newText.trim();
+            if (!cleanText) return;
+            const member = window.teamData.find(m => m.id === memberId);
+            if (member) {
+                const task = member.tasks.find(t => t.id === taskId);
+                if (task && task.text !== cleanText) {
+                    task.text = cleanText;
+                    task.category = detectCategory(cleanText);
+                    if (window.saveToCloud) window.saveToCloud();
+                    showToast('Rincian tugas berhasil diperbarui');
+                    renderAll();
+                }
+            }
+        }
+
+        function updateTaskCategory(memberId, taskId, newCat) {
+            const member = window.teamData.find(m => m.id === memberId);
+            if (member) {
+                const task = member.tasks.find(t => t.id === taskId);
+                if (task) {
+                    task.category = newCat;
+                    if (window.saveToCloud) window.saveToCloud();
+                    showToast('Kategori tugas diperbarui');
+                    renderAll();
+                }
+            }
+        }
+
+        function addQuickTask(event, memberId) {
+            event.preventDefault();
+            const input = document.getElementById(`input-task-${memberId}`);
+            const text = input.value.trim();
+            if (!text) return;
+
+            const member = window.teamData.find(m => m.id === memberId);
+            if (member) {
+                member.tasks.push({
+                    id: 't-' + Date.now(),
+                    text: text,
+                    category: detectCategory(text)
+                });
+                input.value = '';
+                if (window.saveToCloud) window.saveToCloud();
+                showToast(`Tugas baru ditambahkan untuk ${member.name}`);
+                renderAll();
+            }
+        }
+
+        function deleteTask(memberId, taskId) {
+            const member = window.teamData.find(m => m.id === memberId);
+            if (member) {
+                member.tasks = member.tasks.filter(t => t.id !== taskId);
+                if (window.saveToCloud) window.saveToCloud();
+                showToast('Item tugas dihapus');
+                renderAll();
+            }
+        }
+
+        function deleteMember(memberId) {
+            window.teamData = window.teamData.filter(m => m.id !== memberId);
+            if (window.saveToCloud) window.saveToCloud();
+            showToast('Personel dihapus dari daftar');
+            renderAll();
+        }
+
+        function addSpreadsheetRow() {
+            if (window.teamData.length === 0) return;
+            const firstMember = window.teamData[0];
+            firstMember.tasks.push({
+                id: 't-' + Date.now(),
+                text: 'Tugas operasional baru (Klik untuk mengedit)',
+                category: 'Manajemen & Katalog'
+            });
+            if (window.saveToCloud) window.saveToCloud();
+            showToast('Baris baru ditambahkan di tabel');
+            renderAll();
+        }
+
+        // Member Modal Controls
+        function openAddMemberModal() {
+            document.getElementById('memberNameInput').value = '';
+            document.getElementById('memberRoleInput').value = '';
+            document.getElementById('memberThemeInput').value = 'indigo';
+            const modal = document.getElementById('memberModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeMemberModal() {
+            const modal = document.getElementById('memberModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function saveMemberForm(e) {
+            e.preventDefault();
+            const name = document.getElementById('memberNameInput').value.trim().toUpperCase();
+            const role = document.getElementById('memberRoleInput').value.trim().toUpperCase();
+            const theme = document.getElementById('memberThemeInput').value;
+
+            if (!name) return;
+
+            window.teamData.push({
+                id: 'm-' + Date.now(),
+                name: name,
+                role: role || 'STAFF TEAM ONLINE',
+                badge: 'Team Online',
+                theme: theme,
+                tasks: [
+                    { id: 't-' + Date.now(), text: 'Mencetak nota instan dan reguler', category: 'Nota & Keuangan' }
+                ]
+            });
+
+            closeMemberModal();
+            if (window.saveToCloud) window.saveToCloud();
+            showToast(`Personel ${name} berhasil ditambahkan!`);
+            renderAll();
+        }
+
+        // Reset Modal Controls
+        function openResetModal() {
+            const modal = document.getElementById('resetModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeResetModal() {
+            const modal = document.getElementById('resetModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function confirmResetData() {
+            window.teamData = JSON.parse(JSON.stringify(DEFAULT_TEAM_DATA));
+            closeResetModal();
+            if (window.saveToCloud) window.saveToCloud();
+            showToast('Data berhasil direset ke pengaturan awal');
+            renderAll();
+        }
+
+        function saveAllData() {
+            if (window.saveToCloud) window.saveToCloud();
+            showToast('Seluruh perubahan berhasil disimpan!');
+        }
+
+        // =========================================================================
+        // EXPORT & IMPORT FUNCTIONS (SPREADSHEET CSV, WORD DOCX, PDF, POWERPOINT PPTX)
+        // =========================================================================
+
+        // 1. Export to Spreadsheet (CSV UTF-8 with BOM for Excel Compatibility)
+        function exportToCSV() {
+            const rows = [
+                ['No', 'Nama Personel', 'Jabatan / Peran', 'Deskripsi Tugas (Jobdesk)', 'Kategori Tugas', 'Tema Warna']
+            ];
+
+            let count = 1;
+            window.teamData.forEach(member => {
+                if (member.tasks.length === 0) {
+                    rows.push([count++, member.name, member.role, '', 'Manajemen & Katalog', member.theme]);
+                } else {
+                    member.tasks.forEach(task => {
+                        rows.push([count++, member.name, member.role, task.text, task.category, member.theme]);
+                    });
+                }
+            });
+
+            const csvContent = '\uFEFF' + rows.map(row => 
+                row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
+            ).join('\r\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'Data_Jobdesk_Team_Online.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('File Spreadsheet (.CSV) berhasil diunduh!');
+        }
+
+        // 2. Import from Spreadsheet (CSV)
+        function importFromCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== '');
+                if (lines.length < 2) {
+                    showToast('Format CSV kosong atau tidak valid');
+                    return;
+                }
+
+                // Parse CSV line respecting quotes
+                const parseCSVLine = (line) => {
+                    const result = [];
+                    let current = '';
+                    let inQuotes = false;
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        if (char === '"') {
+                            if (inQuotes && line[i + 1] === '"') {
+                                current += '"';
+                                i++;
+                            } else {
+                                inQuotes = !inQuotes;
+                            }
+                        } else if ((char === ',' || char === ';') && !inQuotes) {
+                            result.push(current.trim());
+                            current = '';
+                        } else {
+                            current += char;
+                        }
+                    }
+                    result.push(current.trim());
+                    return result;
+                };
+
+                const groupedMap = new Map();
+                const themes = ['indigo', 'rose', 'purple', 'emerald', 'amber', 'cyan', 'blue'];
+                let themeIdx = 0;
+
+                // Skip header row (index 0)
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = parseCSVLine(lines[i]);
+                    if (cols.length < 4) continue;
+
+                    const name = (cols[1] || 'ANGGOTA').toUpperCase();
+                    const role = cols[2] || 'TIM ONLINE';
+                    const taskText = cols[3] || '';
+                    const category = cols[4] || detectCategory(taskText);
+                    const theme = cols[5] || themes[themeIdx % themes.length];
+
+                    if (!groupedMap.has(name)) {
+                        groupedMap.set(name, {
+                            id: 'm-' + Date.now() + '-' + i,
+                            name: name,
+                            role: role,
+                            badge: 'Team Online',
+                            theme: THEME_CONFIG[theme] ? theme : themes[themeIdx++ % themes.length],
+                            tasks: []
+                        });
+                    }
+
+                    if (taskText) {
+                        groupedMap.get(name).tasks.push({
+                            id: 't-' + Date.now() + '-' + i,
+                            text: taskText,
+                            category: category
+                        });
+                    }
+                }
+
+                if (groupedMap.size > 0) {
+                    window.teamData = Array.from(groupedMap.values());
+                    if (window.saveToCloud) window.saveToCloud();
+                    renderAll();
+                    showToast('Data Spreadsheet berhasil diimpor!');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // 3. Export to Microsoft Word (.doc / HTML-compatible Word Document)
+        function exportToDocx() {
+            const title = document.getElementById('doc-title').innerText;
+            const subtitle = document.getElementById('doc-subtitle').innerText;
+
+            let wordHtml = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset="utf-8">
+                    <title>${title}</title>
+                    <style>
+                        body { font-family: 'Calibri', 'Arial', sans-serif; color: #1e293b; line-height: 1.5; }
+                        .header-box { background-color: #4f46e5; color: #ffffff; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 20px; }
+                        h1 { font-size: 24pt; margin: 0; font-weight: bold; }
+                        p.sub { font-size: 11pt; color: #e0e7ff; margin-top: 5px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                        th { background-color: #312e81; color: #ffffff; padding: 10px; font-size: 11pt; border: 1px solid #cbd5e1; text-align: left; }
+                        td { padding: 10px; border: 1px solid #cbd5e1; vertical-align: top; font-size: 10.5pt; }
+                        .member-name { font-weight: bold; font-size: 12pt; color: #312e81; }
+                        .member-role { font-size: 9.5pt; color: #64748b; font-weight: bold; }
+                        ul { margin: 0; padding-left: 18px; }
+                        li { margin-bottom: 4px; }
+                        .cat-tag { font-size: 8.5pt; color: #4f46e5; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header-box">
+                        <h1>${title}</h1>
+                        <p class="sub">${subtitle}</p>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 8%; text-align:center;">No</th>
+                                <th style="width: 27%;">Nama & Jabatan</th>
+                                <th style="width: 65%;">Rincian Tugas Operasional (Jobdesk)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            window.teamData.forEach((member, idx) => {
+                const taskItems = member.tasks.map(t => `<li>${t.text} <span class="cat-tag">[${t.category}]</span></li>`).join('');
+                wordHtml += `
+                    <tr>
+                        <td style="text-align:center; font-weight:bold;">${idx + 1}</td>
+                        <td>
+                            <div class="member-name">${member.name}</div>
+                            <div class="member-role">${member.role}</div>
+                        </td>
+                        <td>
+                            <ul>${taskItems}</ul>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            wordHtml += `
+                        </tbody>
+                    </table>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob(['\ufeff', wordHtml], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'Jobdesk_Team_Online.doc');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Dokumen Word (.DOC) berhasil diunduh!');
+        }
+
+        // 4. Export to PDF
+        function exportToPDF() {
+            showToast('Menyiapkan dokumen PDF...');
+            const element = document.getElementById('printable-area');
+            const opt = {
+                margin: [0.4, 0.4, 0.4, 0.4],
+                filename: 'Jobdesk_Team_Online.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                showToast('File PDF berhasil diunduh!');
+            });
+        }
+
+        // 5. Export to PowerPoint (.PPTX)
+        function exportToPPTX() {
+            try {
+                showToast('Membuat slide PowerPoint (.PPTX)...');
+                const pptx = new PptxGenJS();
+                pptx.layout = 'LAYOUT_16x9';
+                pptx.author = 'Jobdesk Team Online Manager';
+                pptx.title = document.getElementById('doc-title').innerText;
+
+                // SLIDE 1: Cover Title Slide
+                const slideCover = pptx.addSlide();
+                slideCover.background = { color: '312E81' };
+                slideCover.addText(document.getElementById('doc-title').innerText, {
+                    x: 0.8, y: 1.8, w: 8.4, h: 1.2,
+                    fontSize: 36, bold: true, color: 'FFFFFF', fontFace: 'Arial'
+                });
+                slideCover.addText(document.getElementById('doc-subtitle').innerText, {
+                    x: 0.8, y: 3.0, w: 8.4, h: 0.8,
+                    fontSize: 16, color: 'C7D2FE', fontFace: 'Arial'
+                });
+                slideCover.addText(`Total Personel: ${window.teamData.length} Orang  |  Diekspor pada: ${new Date().toLocaleDateString('id-ID')}`, {
+                    x: 0.8, y: 4.3, w: 8.4, h: 0.5,
+                    fontSize: 12, color: 'FCD34D', bold: true, fontFace: 'Arial'
+                });
+
+                // SLIDE 2: Summary Table Slide
+                const slideSummary = pptx.addSlide();
+                slideSummary.background = { color: 'F8FAFC' };
+                slideSummary.addText('RINGKASAN DISTRIBUSI TIM ONLINE', {
+                    x: 0.5, y: 0.4, w: 9.0, h: 0.6,
+                    fontSize: 22, bold: true, color: '1E293B', fontFace: 'Arial'
+                });
+
+                const tableRows = [
+                    [
+                        { text: 'No', options: { bold: true, fill: '4F46E5', color: 'FFFFFF', align: 'center' } },
+                        { text: 'Nama Personel', options: { bold: true, fill: '4F46E5', color: 'FFFFFF' } },
+                        { text: 'Peran / Jabatan', options: { bold: true, fill: '4F46E5', color: 'FFFFFF' } },
+                        { text: 'Jumlah Tugas', options: { bold: true, fill: '4F46E5', color: 'FFFFFF', align: 'center' } }
+                    ]
+                ];
+
+                window.teamData.forEach((m, idx) => {
+                    tableRows.push([
+                        { text: String(idx + 1), options: { align: 'center' } },
+                        { text: m.name, options: { bold: true } },
+                        { text: m.role },
+                        { text: `${m.tasks.length} Tugas`, options: { align: 'center' } }
+                    ]);
+                });
+
+                slideSummary.addTable(tableRows, {
+                    x: 0.5, y: 1.1, w: 9.0,
+                    fontSize: 12,
+                    border: { pt: 1, color: 'CBD5E1' },
+                    fill: 'FFFFFF',
+                    fontFace: 'Arial'
+                });
+
+                // INDIVIDUAL SLIDES PER MEMBER (2 Members per slide for neat layout)
+                for (let i = 0; i < window.teamData.length; i += 2) {
+                    const slide = pptx.addSlide();
+                    slide.background = { color: 'F1F5F9' };
+
+                    slide.addText('DETAIL JOBDESK PERSONEL', {
+                        x: 0.5, y: 0.3, w: 9.0, h: 0.5,
+                        fontSize: 18, bold: true, color: '334155', fontFace: 'Arial'
+                    });
+
+                    [0, 1].forEach(offset => {
+                        const member = window.teamData[i + offset];
+                        if (!member) return;
+
+                        const xPos = offset === 0 ? 0.5 : 5.1;
+                        const themeHex = (THEME_CONFIG[member.theme] && THEME_CONFIG[member.theme].hex) || '4F46E5';
+
+                        // Card Header Box
+                        slide.addShape(pptx.ShapeType.rect, {
+                            x: xPos, y: 0.9, w: 4.4, h: 0.85,
+                            fill: { color: themeHex },
+                            line: { width: 0 }
+                        });
+
+                        slide.addText(member.name, {
+                            x: xPos + 0.15, y: 0.95, w: 4.1, h: 0.4,
+                            fontSize: 18, bold: true, color: 'FFFFFF', fontFace: 'Arial'
+                        });
+
+                        slide.addText(member.role, {
+                            x: xPos + 0.15, y: 1.35, w: 4.1, h: 0.3,
+                            fontSize: 10, color: 'F1F5F9', fontFace: 'Arial'
+                        });
+
+                        // Card Body Box
+                        slide.addShape(pptx.ShapeType.rect, {
+                            x: xPos, y: 1.75, w: 4.4, h: 3.4,
+                            fill: { color: 'FFFFFF' },
+                            line: { color: 'CBD5E1', width: 1 }
+                        });
+
+                        const bulletList = member.tasks.map(t => ({
+                            text: `${t.text} (${t.category})`,
+                            options: { bullet: true, fontSize: 11, color: '1E293B', breakLine: true }
+                        }));
+
+                        slide.addText(bulletList, {
+                            x: xPos + 0.15, y: 1.85, w: 4.1, h: 3.2,
+                            valign: 'top', fontFace: 'Arial', paraSpaceAfter: 6
+                        });
+                    });
+                }
+
+                pptx.writeFile({ fileName: 'Presentasi_Jobdesk_Team_Online.pptx' }).then(() => {
+                    showToast('Presentasi PowerPoint (.PPTX) berhasil diunduh!');
+                });
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal mengekspor PPTX, silakan coba lagi.');
+            }
+        }
+
+        // Initialize on Window Load
+        window.onload = function() {
+            window.renderAll();
+        };
+    </script>
+</body>
+</html>
